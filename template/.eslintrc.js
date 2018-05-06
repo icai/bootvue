@@ -2,8 +2,8 @@
 
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
   parserOptions: {
+    parser: 'babel-eslint',
     sourceType: 'module'
   },
   env: {
@@ -53,7 +53,7 @@ module.exports = {
     "no-unused-vars": "off",
     "constructor-super": "warn",
     "valid-typeof": "warn",
-    "no-irregular-whitespace": "off"
+    "no-irregular-whitespace": "off",
     {{/if_eq}}
     {{#if_eq lintConfig "standard"}}
     // allow async-await

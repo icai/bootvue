@@ -97,7 +97,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         templateChunks: false,
         apiServer: process.env.npm_config_pro ?
           config.build.proApiServer : config.build.testApiServer,
-        favicon: './src/favicon.png',
+        // favicon: './src/favicon.png',
         hash: process.env.NODE_ENV === 'production',
         appMountId: 'app',
         googleAnalytics: {
