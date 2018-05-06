@@ -34,8 +34,8 @@ The development server will run on port 8080 by default. If that port is already
 ## What's Included
 
 - Solution Choice
- - Multi Page
- - SPA
+  - Multi Page
+  - SPA
 
 - `npm run dev`: first-in-class development experience.
   - Webpack + `vue-loader` for single file Vue components.
