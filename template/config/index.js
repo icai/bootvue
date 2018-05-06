@@ -1,15 +1,23 @@
 'use strict'
-// Template version: 1.2.7
+// Template version: 1.3.1
 // see http://vuejs-templates.github.io/webpack for documentation.
 
 const path = require('path')
 
 module.exports = {
   dev: {
+
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+      //  // demo
+      // '/api': {
+      //   target: 'http://192.168.1.1:8080',
+      //   changeOrigin: true,
+      //   pathRewrite: { '^/api': '' }
+      // }
+    },
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST
@@ -27,6 +35,10 @@ module.exports = {
     // in the browser.
     showEslintErrorsInOverlay: false,
     {{/lint}}
+
+    /**
+     * Source Maps
+     */
 
     // https://webpack.js.org/configuration/devtool/#development
     devtool: 'eval-source-map',
@@ -52,6 +64,11 @@ module.exports = {
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
+
+    /**
+     * Source Maps
+     */
+
     productionSourceMap: true,
     // https://webpack.js.org/configuration/devtool/#production
     devtool: '#source-map',

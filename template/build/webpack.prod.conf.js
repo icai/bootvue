@@ -10,14 +10,20 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const FileManagerPlugin = require('filemanager-webpack-plugin')
+const layoutConf = require('../config/layout.conf')
+const MultipageWebpackPlugin = require('./webpack.multipage.plugin')
 
-const env = {{#if_or unit e2e}}process.env.NODE_ENV === 'testing'
+const env = process.env.NODE_ENV === 'testing'
   ? require('../config/test.env')
-  : {{/if_or}}require('../config/prod.env')
+  : require('../config/prod.env')
+
+
+let releaseName = (process.env.npm_config_pro ? 'pro' : 'test') + `-${utils.getDate(12)}`
 
 const webpackConfig = merge(baseWebpackConfig, {
   module: {
-    rules: utils.styleLoaders({
+    rules: utils.happyStyleLoaders({
       sourceMap: config.build.productionSourceMap,
       extract: true,
       usePostCSS: true
@@ -30,9 +36,16 @@ const webpackConfig = merge(baseWebpackConfig, {
     chunkFilename: utils.assetsPath('js/[id].[chunkhash].js')
   },
   plugins: [
+    ...utils.happyStylePlugins({
+      sourceMap: config.build.productionSourceMap,
+      extract: true,
+      usePostCSS: true
+    }),
+
     // http://vuejs.github.io/vue-loader/en/workflow/production.html
     new webpack.DefinePlugin({
-      'process.env': env
+      'process.env': env,
+      VERSION: JSON.stringify(Date.now())
     }),
     new UglifyJsPlugin({
       uglifyOptions: {
@@ -41,7 +54,10 @@ const webpackConfig = merge(baseWebpackConfig, {
         }
       },
       sourceMap: config.build.productionSourceMap,
+      cache: true,
       parallel: true
+      // Enable parallelization.
+      // Default number of concurrent runs: os.cpus().length - 1
     }),
     // extract css into its own file
     new ExtractTextPlugin({
@@ -50,7 +66,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       // Their CSS will instead be inserted dynamically with style-loader when the codesplit chunk has been loaded by webpack.
       // It's currently set to `true` because we are seeing that sourcemaps are included in the codesplit bundle as well when it's `false`,
       // increasing file size: https://github.com/vuejs-templates/webpack/issues/1110
-      allChunks: true
+      allChunks: true,
     }),
     // Compress extracted CSS. We are using this plugin so that possible
     // duplicated CSS from different components can be deduped.
@@ -59,33 +75,65 @@ const webpackConfig = merge(baseWebpackConfig, {
         ? { safe: true, map: { inline: false } }
         : { safe: true }
     }),
+    new MultipageWebpackPlugin({
+      htmlTemplatePath: function (entryKey) {
+        return layoutConf[entryKey] || layoutConf.base
+      },
+      templateFilename: '[name].html',
+      templatePath: './',
+      htmlWebpackPluginOptions: {
+        minify: {
+          // removeComments: true,
+          // collapseInlineTagWhitespace: true,
+          // decodeEntities: true,
+          // conservativeCollapse: true,
+          // removeScriptTypeAttributes: true,
+          collapseWhitespace: true,
+          // removeAttributeQuotes: true,
+          minifyCSS: true,
+          minifyJS: true
+        },
+        inject: true,
+        templateChunks: false,
+        apiServer: process.env.npm_config_pro ?
+          '//192.168.1.1:8080' : '//www.www.com',
+        favicon: './src/assets/img/favicon.ico',
+        hash: process.env.NODE_ENV === 'production',
+        appMountId: 'app',
+        googleAnalytics: {
+          trackingId: 'UA-XXXX-XX',
+          pageViewOnLoad: true
+        }
+      }
+    }),
     // generate dist index.html with correct asset hash for caching.
     // you can customize output by editing /index.html
     // see https://github.com/ampedandwired/html-webpack-plugin
-    new HtmlWebpackPlugin({
-      filename: {{#if_or unit e2e}}process.env.NODE_ENV === 'testing'
-        ? 'index.html'
-        : {{/if_or}}config.build.index,
-      template: 'index.html',
-      inject: true,
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeAttributeQuotes: true
-        // more options:
-        // https://github.com/kangax/html-minifier#options-quick-reference
-      },
-      // necessary to consistently work with multiple chunks via CommonsChunkPlugin
-      chunksSortMode: 'dependency'
-    }),
+    // new HtmlWebpackPlugin({
+    //   filename: process.env.NODE_ENV === 'testing'
+    //     ? 'index.html'
+    //     : config.build.index,
+    //   template: 'index.html',
+    //   inject: true,
+    //   minify: {
+    //     removeComments: true,
+    //     collapseWhitespace: true,
+    //     removeAttributeQuotes: true
+    //     // more options:
+    //     // https://github.com/kangax/html-minifier#options-quick-reference
+    //   },
+    //   // necessary to consistently work with multiple chunks via CommonsChunkPlugin
+    //   chunksSortMode: 'dependency'
+    // }),
     // keep module.id stable when vendor modules does not change
     new webpack.HashedModuleIdsPlugin(),
     // enable scope hoisting
     new webpack.optimize.ModuleConcatenationPlugin(),
     // split vendor js into its own file
+    // https://medium.com/webpack/webpack-bits-getting-the-most-out-of-the-commonschunkplugin-ab389e5f318
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
-      minChunks (module) {
+      minChunks(module) {
         // any required modules inside node_modules are extracted to vendor
         return (
           module.resource &&
@@ -111,15 +159,82 @@ const webpackConfig = merge(baseWebpackConfig, {
       children: true,
       minChunks: 3
     }),
-
-    // copy custom static assets
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../static'),
-        to: config.build.assetsSubDirectory,
-        ignore: ['.*']
+    // split echarts into its own file
+    new webpack.optimize.CommonsChunkPlugin({
+      async: 'echarts',
+      minChunks(module) {
+        var context = module.context;
+        return context && (context.indexOf('echarts') >= 0 || context.indexOf('zrender') >= 0);
       }
-    ])
+    }),
+
+    // https://github.com/webpack-contrib/copy-webpack-plugin
+    //
+    // copy custom static assets
+
+
+    new FileManagerPlugin({
+      onStart: {
+        mkdir: [
+          './releases/'
+        ],
+      },
+      onEnd: {
+        copy: [
+          { source: './static/**/*', destination: './dist/static' },
+          { source: './Web.config', destination: './dist' },
+          { source: './build/**/*', destination: './dist' }
+          // 合并gulp build 文件夹到 webpack build文件夹
+          // { source: '/path/**/*.{html,js}', destination: '/path/to' },
+          // { source: '/path/{file1,file2}.js', destination: '/path/to' },
+          // { source: '/path/file-[hash].js', destination: '/path/to' }
+        ],
+        // move: [
+        //   { source: '/path/from', destination: '/path/to' },
+        //   { source: '/path/fromfile.txt', destination: '/path/tofile.txt' }
+        // ],
+        // delete: [
+        //   '/path/to/file.txt',
+        //   '/path/to/directory/'
+        // ],
+        // mkdir: [
+        //   '/path/to/directory/',
+        //   '/another/directory/'
+        // ],
+        archive: [
+          { source: './dist', destination: `./releases/dist-${releaseName}.zip` }
+          // { source: '/path/**/*.js', destination: '/path/to.zip' },
+          // { source: '/path/fromfile.txt', destination: '/path/to.zip' },
+          // { source: '/path/fromfile.txt', destination: '/path/to.zip', format: 'tar' },
+          // {
+          //   source: '/path/fromfile.txt',
+          //   destination: '/path/to.tar.gz',
+          //   format: 'tar',
+          //   options: {
+          //     gzip: true,
+          //     gzipOptions: {
+          //       level: 1
+          //     }
+          //   }
+          // }
+        ]
+      }
+    })
+    // new CopyWebpackPlugin([
+    //   {
+    //     from: path.resolve(__dirname, '../static'),
+    //     to: config.build.assetsSubDirectory,
+    //     ignore: ['.*']
+    //   }
+    // ]),
+
+    // new CopyWebpackPlugin([
+    //   {
+    //     from: path.resolve(__dirname, '../Web.config'),
+    //     to: config.build.assetsRoot,
+    //   }
+    // ])
+
   ]
 })
 

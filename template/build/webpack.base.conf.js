@@ -2,13 +2,29 @@
 const path = require('path')
 const utils = require('./utils')
 const config = require('../config')
+
+const dllConfig = require('../config/dll.conf')
+const glob = require('glob')
 const vueLoaderConfig = require('./vue-loader.conf')
+const webpack = require('webpack')
+const CommonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const AutoDllPlugin = require('autodll-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+
+const isProduction = process.env.NODE_ENV === 'production'
+const sourceMapEnabled = isProduction
+  ? config.build.productionSourceMap
+  : config.dev.cssSourceMap
+
+// const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin')
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-{{#lint}}const createLintingRule = () => ({
+{{#lint}}
+const createLintingRule = () => ({
   test: /\.(js|vue)$/,
   loader: 'eslint-loader',
   enforce: 'pre',
@@ -17,7 +33,28 @@ function resolve (dir) {
     formatter: require('eslint-friendly-formatter'),
     emitWarning: !config.dev.showEslintErrorsInOverlay
   }
-}){{/lint}}
+})
+{{#happypack}}
+const createHappyPackLintingRule = () => ({
+  test: /\.(js|vue)$/,
+  loader: 'happypack/loader?id=eslint',
+  enforce: 'pre',
+  include: [resolve('src'), resolve('test')]
+})
+{{/happypack}}
+{{/lint}}
+
+
+
+const globEntries = (globPath) => {
+  const entries = {}
+  glob.sync(globPath, {root: path.resolve(__dirname, '../')}).forEach(path => {
+    const chunk = path.split('./src/pages/')[1].split(/\/app\.js/)[0]
+    entries[chunk] = path
+  })
+  return entries
+}
+
 
 module.exports = {
   context: path.resolve(__dirname, '../'),
@@ -26,25 +63,43 @@ module.exports = {
   },
   output: {
     path: config.build.assetsRoot,
-    filename: '[name].js',
+    filename: 'assets/js/[name].js',
     publicPath: process.env.NODE_ENV === 'production'
       ? config.build.assetsPublicPath
       : config.dev.assetsPublicPath
   },
   resolve: {
-    extensions: ['.js', '.vue', '.json'],
+    extensions: ['.js', '.jsx', '.vue', '.json'],
     alias: {
       {{#if_eq build "standalone"}}
       'vue$': 'vue/dist/vue.esm.js',
       {{/if_eq}}
-      '@': resolve('src')
+      '@': resolve('src'),
+      src: resolve('src')
+
+
     }
   },
   module: {
     rules: [
       {{#lint}}
-      ...(config.dev.useEslint ? [createLintingRule()] : []),
+	  {{#if happypack}}
+      ...(config.dev.useEslint ? [createHappyPackLintingRule()] : []),
+	  {{else}}
+	  ...(config.dev.useEslint ? [createLintingRule()] : []),
+	  {{/if}}
       {{/lint}}
+	  {{#if happypack}}      {
+        test: /\.vue$/,
+        loader: 'happypack/loader?id=vue'
+      },
+      {
+        test: /\.(js|jsx)$/,
+        loader: 'happypack/loader?id=js',
+        exclude: /(node_modules|packages)/,
+        include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')],
+      },
+	  {{else}}
       {
         test: /\.vue$/,
         loader: 'vue-loader',
@@ -55,9 +110,21 @@ module.exports = {
         loader: 'babel-loader',
         include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
       },
+	  {{/if}}
+	  {{#svg-sprite}}
+      {
+        test: /\.svg$/,
+        loader: 'svg-sprite-loader',
+        include: [resolve('src/icons')],
+        options: {
+          symbolId: 'icon-[name]'
+        }
+      },
+	  {{/svg-sprite}}
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
         loader: 'url-loader',
+        {{#svg-sprite}}exclude: [resolve('src/icons')],{{/svg-sprite}}
         options: {
           limit: 10000,
           name: utils.assetsPath('img/[name].[hash:7].[ext]')
@@ -79,6 +146,19 @@ module.exports = {
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
       }
+	  {{#html-loader}}
+      // see https://github.com/jantimon/html-webpack-plugin/blob/master/docs/template-option.md
+      ,{
+        test: /\.html$/,
+        use: [{
+          loader: 'html-loader',
+          options: {
+            root: resolve('src'),
+            attrs: ['img:src', 'link:href']
+          }
+        }]
+      }
+	 {{/html-loader}}
     ]
   },
   node: {
@@ -94,3 +174,87 @@ module.exports = {
     child_process: 'empty'
   }
 }
+
+module.exports.plugins = [
+{{#happypack}}
+  utils.createHappyPlugin('eslint', [{
+    loader: 'eslint-loader',
+    // here you can place eslint-loader options:
+    options: {
+      formatter: require('eslint-friendly-formatter'),
+      emitWarning: true || !config.dev.showEslintErrorsInOverlay
+    }
+  }]),
+  utils.createHappyPlugin('js', [
+    {
+      loader: 'babel-loader',
+      options: {
+        cacheDirectory: true
+      }
+    }
+  ]),
+  utils.createHappyPlugin('vue', [
+    {
+      loader: 'vue-loader',
+      options: {
+        loaders: {
+          ...utils.happyVueStyleLoaders({ extract: isProduction}),
+          js: {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true
+            }
+          }
+        },
+        cssSourceMap: sourceMapEnabled,
+        cacheBusting: config.dev.cacheBusting,
+        transformToRequire: {
+          video: ['src', 'poster'],
+          source: 'src',
+          img: 'src',
+          image: 'xlink:href'
+        }
+      }
+    }
+  ]),
+{{/happypack}}
+{{#usedll}}
+  new AutoDllPlugin({
+    inject: true, // will inject the DLL bundles to index.html
+    filename: '[name].[hash:5].js',
+    path: './dll',
+    entry: dllConfig,
+    plugins:[
+      new webpack.ProvidePlugin({
+        $: 'jquery',
+        jQuery: 'jquery'
+      }),
+      new UglifyJsPlugin({
+        uglifyOptions: {
+          compress: isProduction ? {
+            warnings: false
+          } : false
+        },
+        sourceMap: config.build.productionSourceMap,
+        cache: true,
+        parallel: true
+        // Enable parallelization.
+        // Default number of concurrent runs: os.cpus().length - 1
+      })
+    ]
+  }),
+{{/usedll}}
+{{#jquery}}
+  new webpack.ProvidePlugin({
+    $: 'jquery',
+    jQuery: 'jquery'
+  })
+{{/jquery}}
+];
+
+// https://github.com/jantimon/html-webpack-plugin
+// https://github.com/jaketrent/html-webpack-template
+// https://www.npmjs.com/search?q=%20html-webpack-plugin&page=1&ranking=optimal
+// https://github.com/jantimon/html-webpack-plugin/blob/master/docs/template-option.md
+
+
