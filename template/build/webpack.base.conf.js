@@ -58,9 +58,15 @@ const globEntries = (globPath) => {
 
 module.exports = {
   context: path.resolve(__dirname, '../'),
+  {{#if multipage}}
+  entry: !isProduction ? {
+    app: './src/main.js'
+  } : globEntries('./src/pages/**/app.@(js)'),
+  {{else}}
   entry: {
     app: './src/main.js'
   },
+  {{/if}}
   output: {
     path: config.build.assetsRoot,
     filename: 'assets/js/[name].js',
@@ -76,8 +82,6 @@ module.exports = {
       {{/if_eq}}
       '@': resolve('src'),
       src: resolve('src')
-
-
     }
   },
   module: {
@@ -111,7 +115,7 @@ module.exports = {
         include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
       },
 	  {{/if}}
-	  {{#svg-sprite}}
+	  {{#svgsprite}}
       {
         test: /\.svg$/,
         loader: 'svg-sprite-loader',
@@ -120,11 +124,11 @@ module.exports = {
           symbolId: 'icon-[name]'
         }
       },
-	  {{/svg-sprite}}
+	  {{/svgsprite}}
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
         loader: 'url-loader',
-        {{#svg-sprite}}exclude: [resolve('src/icons')],{{/svg-sprite}}
+        {{#svgsprite}}exclude: [resolve('src/icons')],{{/svgsprite}}
         options: {
           limit: 10000,
           name: utils.assetsPath('img/[name].[hash:7].[ext]')
@@ -146,7 +150,7 @@ module.exports = {
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
       }
-	  {{#html-loader}}
+	  {{#htmlloader}}
       // see https://github.com/jantimon/html-webpack-plugin/blob/master/docs/template-option.md
       ,{
         test: /\.html$/,
@@ -158,7 +162,7 @@ module.exports = {
           }
         }]
       }
-	 {{/html-loader}}
+	 {{/htmlloader}}
     ]
   },
   node: {
@@ -252,9 +256,5 @@ module.exports.plugins = [
 {{/jquery}}
 ];
 
-// https://github.com/jantimon/html-webpack-plugin
-// https://github.com/jaketrent/html-webpack-template
-// https://www.npmjs.com/search?q=%20html-webpack-plugin&page=1&ranking=optimal
-// https://github.com/jantimon/html-webpack-plugin/blob/master/docs/template-option.md
 
 

@@ -21,11 +21,11 @@
     {{#lint}}
     "lint": "eslint --ext .js,.vue src{{#unit}} test/unit/specs{{/unit}}{{#e2e}} test/e2e/specs{{/e2e}}",
     {{/lint}}
-    "build": "node build/build.js",
+    "build": "npm run multipage && node build/build.js",
     "build:test": "gulp build:test && npm run build",
     "build:pro": "gulp build:pro && npm run build --pro",
-    "route": "node ./bin/genroute.js",
-
+    "route": "node build/genroute.js",
+    "multipage": "node build/genmultiindex.js",
     },
     "dependencies": {
 	    "vue": "^2.5.2"{{#router}},

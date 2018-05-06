@@ -33,6 +33,10 @@ module.exports = {
       type: 'string',
       message: 'Author',
     },
+    multipage: {
+      type: 'confirm',
+      message: 'Is Multi Page project, otherwise SPA?',
+    },
     build: {
       type: 'list',
       message: 'Vue build',
@@ -50,6 +54,31 @@ module.exports = {
         },
       ],
     },
+    jquery: {
+      type: 'confirm',
+      message: 'Install jquery?',
+    },
+    jquery: {
+      type: 'confirm',
+      message: 'Install jquery?',
+    },
+    happypack: {
+      type: 'confirm',
+      message: 'Install HappyPack (https://www.npmjs.com/package/happypack)?',
+    },
+    usedll: {
+      type: 'confirm',
+      message: 'Install AutoDllPlugin (https://www.npmjs.com/package/autodll-webpack-plugin)?',
+    },
+    htmlloader: {
+      type: 'confirm',
+      message: 'Install HTML Loader (https://www.npmjs.com/package/html-loader)?',
+    },
+    svgsprite: {
+      type: 'confirm',
+      message: 'Install SVG sprite loader (https://www.npmjs.com/package/svg-sprite-loader)?',
+    },
+
     router: {
       type: 'confirm',
       message: 'Install vue-router?',
@@ -145,7 +174,9 @@ module.exports = {
     'test/unit/specs/index.js': "unit && runner === 'karma'",
     'test/unit/setup.js': "unit && runner === 'jest'",
     'test/e2e/**/*': 'e2e',
-    'src/router/**/*': 'router',
+    'src/router/**/*': 'multipage || router',
+    'src/pages/**/*': 'multipage',
+    'src/base/**/*': 'multipage',
   },
   complete: function(data, { chalk }) {
     const green = chalk.green
