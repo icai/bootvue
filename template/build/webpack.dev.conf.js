@@ -78,7 +78,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       template: './src/layout/base.tpl',
       templateChunks: false,
       apiServer: config.dev.apiServer,
-      // favicon: './src/favicon.png',
+      favicon: './favicon.png',
       hash: process.env.NODE_ENV === 'production',
       appMountId: 'app',
       googleAnalytics: {
