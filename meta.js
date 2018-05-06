@@ -139,6 +139,10 @@ module.exports = {
       type: 'confirm',
       message: 'Setup e2e tests with Nightwatch?',
     },
+    npmrc: {
+      type: 'confirm',
+      message: 'Setup npmrc with taobao?',
+    },
     autoInstall: {
       type: 'list',
       message:
@@ -165,6 +169,7 @@ module.exports = {
   filters: {
     '.eslintrc.js': 'lint',
     '.eslintignore': 'lint',
+    '.npmrc': 'npmrc',
     'config/test.env.js': 'unit || e2e',
     'build/webpack.test.conf.js': "unit && runner === 'karma'",
     'test/unit/**/*': 'unit',
