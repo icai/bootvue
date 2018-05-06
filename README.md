@@ -15,17 +15,20 @@ This is a project template for [vue-cli](https://github.com/vuejs/vue-cli). **It
 
 ``` bash
 $ npm install -g vue-cli
-$ vue init vue-template/webpack my-project
+$ vue init icai/bootvue my-project
 $ cd my-project
 $ npm install
 $ npm run dev
 ```
 
+<del>
 This will scaffold the project using the `master` branch. If you wish to use the latest version of the webpack template, do the following instead:
 
 ``` bash
-$ vue init webpack#develop my-project
+$ vue init icai/bootvue#develop my-project
 ```
+</del>
+
 
 :warning: **The develop branch is not considered stable and can contain bugs or not build at all, so use at your own risk.**
 
