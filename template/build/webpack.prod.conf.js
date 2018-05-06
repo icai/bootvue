@@ -96,8 +96,8 @@ const webpackConfig = merge(baseWebpackConfig, {
         inject: true,
         templateChunks: false,
         apiServer: process.env.npm_config_pro ?
-          '//192.168.1.1:8080' : '//www.www.com',
-        favicon: './src/assets/img/favicon.ico',
+          config.build.proApiServer : config.build.testApiServer,
+        favicon: './src/favicon.png',
         hash: process.env.NODE_ENV === 'production',
         appMountId: 'app',
         googleAnalytics: {
@@ -131,47 +131,42 @@ const webpackConfig = merge(baseWebpackConfig, {
     new webpack.optimize.ModuleConcatenationPlugin(),
     // split vendor js into its own file
     // https://medium.com/webpack/webpack-bits-getting-the-most-out-of-the-commonschunkplugin-ab389e5f318
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      minChunks(module) {
-        // any required modules inside node_modules are extracted to vendor
-        return (
-          module.resource &&
-          /\.js$/.test(module.resource) &&
-          module.resource.indexOf(
-            path.join(__dirname, '../node_modules')
-          ) === 0
-        )
-      }
-    }),
-    // extract webpack runtime and module manifest to its own file in order to
-    // prevent vendor hash from being updated whenever app bundle is updated
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'manifest',
-      minChunks: Infinity
-    }),
-    // This instance extracts shared chunks from code splitted chunks and bundles them
-    // in a separate chunk, similar to the vendor chunk
-    // see: https://webpack.js.org/plugins/commons-chunk-plugin/#extra-async-commons-chunk
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'app',
-      async: 'vendor-async',
-      children: true,
-      minChunks: 3
-    }),
-    // split echarts into its own file
-    new webpack.optimize.CommonsChunkPlugin({
-      async: 'echarts',
-      minChunks(module) {
-        var context = module.context;
-        return context && (context.indexOf('echarts') >= 0 || context.indexOf('zrender') >= 0);
-      }
-    }),
-
-    // https://github.com/webpack-contrib/copy-webpack-plugin
-    //
-    // copy custom static assets
-
+    // new webpack.optimize.CommonsChunkPlugin({
+    //   name: 'vendor',
+    //   minChunks(module) {
+    //     // any required modules inside node_modules are extracted to vendor
+    //     return (
+    //       module.resource &&
+    //       /\.js$/.test(module.resource) &&
+    //       module.resource.indexOf(
+    //         path.join(__dirname, '../node_modules')
+    //       ) === 0
+    //     )
+    //   }
+    // }),
+    // // extract webpack runtime and module manifest to its own file in order to
+    // // prevent vendor hash from being updated whenever app bundle is updated
+    // new webpack.optimize.CommonsChunkPlugin({
+    //   name: 'manifest',
+    //   minChunks: Infinity
+    // }),
+    // // This instance extracts shared chunks from code splitted chunks and bundles them
+    // // in a separate chunk, similar to the vendor chunk
+    // // see: https://webpack.js.org/plugins/commons-chunk-plugin/#extra-async-commons-chunk
+    // new webpack.optimize.CommonsChunkPlugin({
+    //   name: 'app',
+    //   async: 'vendor-async',
+    //   children: true,
+    //   minChunks: 3
+    // }),
+    // // split echarts into its own file
+    // new webpack.optimize.CommonsChunkPlugin({
+    //   async: 'echarts',
+    //   minChunks(module) {
+    //     var context = module.context;
+    //     return context && (context.indexOf('echarts') >= 0 || context.indexOf('zrender') >= 0);
+    //   }
+    // }),
 
     new FileManagerPlugin({
       onStart: {
@@ -181,10 +176,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       },
       onEnd: {
         copy: [
-          { source: './static/**/*', destination: './dist/static' },
-          { source: './Web.config', destination: './dist' },
-          { source: './build/**/*', destination: './dist' }
-          // 合并gulp build 文件夹到 webpack build文件夹
+          { source: './static/**/*', destination: './dist/static' }
           // { source: '/path/**/*.{html,js}', destination: '/path/to' },
           // { source: '/path/{file1,file2}.js', destination: '/path/to' },
           // { source: '/path/file-[hash].js', destination: '/path/to' }
@@ -220,6 +212,10 @@ const webpackConfig = merge(baseWebpackConfig, {
         ]
       }
     })
+
+    // https://github.com/webpack-contrib/copy-webpack-plugin
+    //
+    // copy custom static assets
     // new CopyWebpackPlugin([
     //   {
     //     from: path.resolve(__dirname, '../static'),

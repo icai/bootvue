@@ -1,6 +1,24 @@
 import Vue from 'vue'
 
-let BaseViewMixins = {};
+let BaseViewMixins = [{
+
+  beforeCreate() {
+    setTimeout(() => {
+      this.$emit('pageviewCreate');
+    }, 0);
+  },
+  created: function () {
+    if (this.initView) {
+      let oldInitView = this.initView;
+      // override methods
+      this.initView = () => {
+        this.$on('pageviewCreated', () => {
+          oldInitView.call(this);
+        })
+      }
+    }
+  }
+}];
 
 function broadcast(componentName, eventName, params) {
   this.$children.forEach(child => {

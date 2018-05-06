@@ -6,7 +6,7 @@ const path = require('path')
 
 module.exports = {
   dev: {
-
+    apiServer: '/api',
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
@@ -57,6 +57,8 @@ module.exports = {
   },
 
   build: {
+    testApiServer: '/api',
+    proApiServer: '/api',
     // Template for index.html
     index: path.resolve(__dirname, '../dist/index.html'),
 
@@ -64,6 +66,7 @@ module.exports = {
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
+
 
     /**
      * Source Maps

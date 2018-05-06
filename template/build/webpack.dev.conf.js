@@ -139,10 +139,10 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
       inject: true,
-      template: './layout/base.tpl',
+      template: './src/layout/base.tpl',
       templateChunks: false,
-      apiServer: '//119.147.171.113:28080',
-      favicon: './src/assets/img/favicon.ico',
+      apiServer: config.dev.apiServer,
+      favicon: './src/favicon.png',
       hash: process.env.NODE_ENV === 'production',
       appMountId: 'app',
       googleAnalytics: {
