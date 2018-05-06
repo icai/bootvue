@@ -93,6 +93,11 @@ module.exports = {
       message: 'Pick an ESLint preset',
       choices: [
         {
+          name: 'Recommended (https://github.com/vuejs/eslint-plugin-vue)',
+          value: 'recommended',
+          short: 'Recommended',
+        },
+        {
           name: 'Standard (https://github.com/standard/standard)',
           value: 'standard',
           short: 'Standard',
