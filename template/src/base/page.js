@@ -9,7 +9,6 @@ function broadcast(componentName, eventName, params) {
     if (name === componentName) {
       child.$emit.apply(child, [eventName].concat(params));
     } else {
-      // todo 如果 params 是空数组，接收到的会是 undefined
       broadcast.apply(child, [componentName, eventName].concat([params]));
     }
   });
@@ -17,10 +16,9 @@ function broadcast(componentName, eventName, params) {
 
 const Page = function (options) {
 
-  // mixins 自定义方法
+  // mixins
   var VuePlugin = {};
   // VuePlugin.install = function (Vue, options) {
-  //   // 批量注册过滤器
   //   var vueFilters = {
   //     lineBreak: function (val) {
   //       return val.replace(/(\/r\/n){1,}/g, '<br>')

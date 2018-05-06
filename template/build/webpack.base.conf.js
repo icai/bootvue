@@ -229,10 +229,12 @@ module.exports.plugins = [
     path: './dll',
     entry: dllConfig,
     plugins:[
+      {{#jquery}}
       new webpack.ProvidePlugin({
         $: 'jquery',
         jQuery: 'jquery'
       }),
+      {{/jquery}}
       new UglifyJsPlugin({
         uglifyOptions: {
           compress: isProduction ? {
