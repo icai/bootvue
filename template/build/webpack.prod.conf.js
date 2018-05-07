@@ -142,7 +142,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     new webpack.HashedModuleIdsPlugin(),
     // enable scope hoisting
     new webpack.optimize.ModuleConcatenationPlugin(),
-    {{#if !multipage}}
+    {{#unless multipage}}
     // split vendor js into its own file
     // https://medium.com/webpack/webpack-bits-getting-the-most-out-of-the-commonschunkplugin-ab389e5f318
     new webpack.optimize.CommonsChunkPlugin({
@@ -181,7 +181,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     //     return context && (context.indexOf('echarts') >= 0 || context.indexOf('zrender') >= 0);
     //   }
     // }),
-    {{/if}}
+    {{/unless}}
     new FileManagerPlugin({
       onStart: {
         mkdir: [
