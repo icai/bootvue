@@ -25,6 +25,7 @@
     "build:test": "npm run build",
     "build:pro": "npm run build --pro",
     "route": "node build/genroute.js",
+    "watchroute": "node build/watch.js",
     "multipage": "node build/genmultiindex.js"
     },
     "dependencies": {

@@ -75,6 +75,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         ? { safe: true, map: { inline: false } }
         : { safe: true }
     }),
+    {{#if multipage}}
     new MultipageWebpackPlugin({
       htmlTemplatePath: function (entryKey) {
         return layoutConf[entryKey] || layoutConf.base
@@ -106,59 +107,72 @@ const webpackConfig = merge(baseWebpackConfig, {
         }
       }
     }),
+    {{else}}
     // generate dist index.html with correct asset hash for caching.
     // you can customize output by editing /index.html
     // see https://github.com/ampedandwired/html-webpack-plugin
-    // new HtmlWebpackPlugin({
-    //   filename: process.env.NODE_ENV === 'testing'
-    //     ? 'index.html'
-    //     : config.build.index,
-    //   template: 'index.html',
-    //   inject: true,
-    //   minify: {
-    //     removeComments: true,
-    //     collapseWhitespace: true,
-    //     removeAttributeQuotes: true
-    //     // more options:
-    //     // https://github.com/kangax/html-minifier#options-quick-reference
-    //   },
-    //   // necessary to consistently work with multiple chunks via CommonsChunkPlugin
-    //   chunksSortMode: 'dependency'
-    // }),
+    new HtmlWebpackPlugin({
+      filename: process.env.NODE_ENV === 'testing'
+        ? 'index.html'
+        : config.build.index,
+      template: './src/layout/base.tpl',
+      inject: true,
+      favicon: './favicon.png',
+      apiServer: process.env.npm_config_pro ?
+        config.build.proApiServer : config.build.testApiServer,
+      hash: process.env.NODE_ENV === 'production',
+      appMountId: 'app',
+      googleAnalytics: {
+        trackingId: 'UA-XXXX-XX',
+        pageViewOnLoad: true
+      },
+      minify: {
+        removeComments: true,
+        collapseWhitespace: true,
+        removeAttributeQuotes: true
+        // more options:
+        // https://github.com/kangax/html-minifier#options-quick-reference
+      },
+      // necessary to consistently work with multiple chunks via CommonsChunkPlugin
+      chunksSortMode: 'dependency'
+    }),
+
+    {{/if}}
     // keep module.id stable when vendor modules does not change
     new webpack.HashedModuleIdsPlugin(),
     // enable scope hoisting
     new webpack.optimize.ModuleConcatenationPlugin(),
+    {{#if !multipage}}
     // split vendor js into its own file
     // https://medium.com/webpack/webpack-bits-getting-the-most-out-of-the-commonschunkplugin-ab389e5f318
-    // new webpack.optimize.CommonsChunkPlugin({
-    //   name: 'vendor',
-    //   minChunks(module) {
-    //     // any required modules inside node_modules are extracted to vendor
-    //     return (
-    //       module.resource &&
-    //       /\.js$/.test(module.resource) &&
-    //       module.resource.indexOf(
-    //         path.join(__dirname, '../node_modules')
-    //       ) === 0
-    //     )
-    //   }
-    // }),
-    // // extract webpack runtime and module manifest to its own file in order to
-    // // prevent vendor hash from being updated whenever app bundle is updated
-    // new webpack.optimize.CommonsChunkPlugin({
-    //   name: 'manifest',
-    //   minChunks: Infinity
-    // }),
-    // // This instance extracts shared chunks from code splitted chunks and bundles them
-    // // in a separate chunk, similar to the vendor chunk
-    // // see: https://webpack.js.org/plugins/commons-chunk-plugin/#extra-async-commons-chunk
-    // new webpack.optimize.CommonsChunkPlugin({
-    //   name: 'app',
-    //   async: 'vendor-async',
-    //   children: true,
-    //   minChunks: 3
-    // }),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'vendor',
+      minChunks(module) {
+        // any required modules inside node_modules are extracted to vendor
+        return (
+          module.resource &&
+          /\.js$/.test(module.resource) &&
+          module.resource.indexOf(
+            path.join(__dirname, '../node_modules')
+          ) === 0
+        )
+      }
+    }),
+    // extract webpack runtime and module manifest to its own file in order to
+    // prevent vendor hash from being updated whenever app bundle is updated
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'manifest',
+      minChunks: Infinity
+    }),
+    // This instance extracts shared chunks from code splitted chunks and bundles them
+    // in a separate chunk, similar to the vendor chunk
+    // see: https://webpack.js.org/plugins/commons-chunk-plugin/#extra-async-commons-chunk
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'app',
+      async: 'vendor-async',
+      children: true,
+      minChunks: 3
+    }),
     // // split echarts into its own file
     // new webpack.optimize.CommonsChunkPlugin({
     //   async: 'echarts',
@@ -167,7 +181,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     //     return context && (context.indexOf('echarts') >= 0 || context.indexOf('zrender') >= 0);
     //   }
     // }),
-
+    {{/if}}
     new FileManagerPlugin({
       onStart: {
         mkdir: [
